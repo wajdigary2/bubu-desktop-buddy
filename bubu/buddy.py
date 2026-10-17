@@ -45,7 +45,7 @@ from .stats import Needs
 
 BASE_W, BASE_H = 360, 400  # window size at scale 1.0
 FOOT_PAD = 26  # window pixels kept below the feet (shadow room)
-CHAR_H = 210  # character height at scale 1.0, see character.py
+CHAR_H = character.CHAR_HEIGHT  # character height at scale 1.0, see character.py
 TICK_MS = 16  # ~60 fps
 GRAVITY = 2400.0  # px/s^2 while falling
 JUMP_VELOCITY = -720.0

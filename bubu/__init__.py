@@ -7,4 +7,4 @@ snacks and reacts when you pet or drag it around. Everything is drawn in code
 
 __version__ = "0.1.0"
 APP_NAME = "Bubu Desktop Buddy"
-REPO_URL = "https://github.com/your-name/bubu-desktop-buddy"
+REPO_URL = "https://github.com/wajdigary2/bubu-desktop-buddy"

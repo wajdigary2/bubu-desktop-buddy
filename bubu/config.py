@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import shlex
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -18,7 +19,8 @@ APP_ID = "bubu-desktop-buddy"
 
 def _config_home() -> Path:
     if sys.platform == "win32":
-        return Path(os.environ.get("APPDATA", str(Path.home())))
+        # Prefer APPDATA, but fall back to a typical Roaming folder if missing.
+        return Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
     return Path(
         os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
     )
@@ -72,8 +74,8 @@ class Config:
 def _launch_command() -> str:
     """Command that (re)launches Bubu, for autostart entries."""
     if getattr(sys, "frozen", False):  # PyInstaller build
-        return f'"{sys.executable}"'
-    return f'"{sys.executable}" -m bubu'
+        return sys.executable
+    return f"{sys.executable} -m bubu"
 
 
 def _set_auto_start_windows(enabled: bool) -> bool:
@@ -88,12 +90,14 @@ def _set_auto_start_windows(enabled: bool) -> bool:
             winreg.KEY_SET_VALUE | winreg.KEY_QUERY_VALUE,
         ) as key:
             if enabled:
+                # Wrap the command in quotes for the registry value so paths with
+                # spaces are handled correctly.
                 winreg.SetValueEx(
                     key,
                     "BubuDesktopBuddy",
                     0,
                     winreg.REG_SZ,
-                    _launch_command(),
+                    f'"{_launch_command()}"',
                 )
             else:
                 try:
@@ -111,12 +115,14 @@ def _set_auto_start_linux(enabled: bool) -> bool:
     try:
         if enabled:
             autostart_dir.mkdir(parents=True, exist_ok=True)
+            # Quote the exec command properly for desktop files.
+            exec_cmd = shlex.quote(_launch_command())
             desktop_file.write_text(
                 "[Desktop Entry]\n"
                 "Type=Application\n"
                 "Name=Bubu Desktop Buddy\n"
                 "Comment=A tiny desktop companion\n"
-                f"Exec={_launch_command()}\n"
+                f"Exec={exec_cmd}\n"
                 f"Icon={APP_ID}\n"
                 "Terminal=false\n"
                 "X-GNOME-Autostart-enabled=true\n",

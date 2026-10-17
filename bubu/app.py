@@ -15,11 +15,16 @@ from .config import Config
 
 def _acquire_single_instance() -> tuple[bool, QSharedMemory | None]:
     """Return (allowed, memory). A second launch exits instead of double-buddying."""
-    memory = QSharedMemory(f"{APP_NAME} instance")
-    if memory.attach():  # Another instance owns the segment already.
-        memory.detach()
+    # Use a stable key without spaces to avoid platform-specific issues.
+    key = "bubu_desktop_buddy_instance"
+    memory = QSharedMemory(key)
+    # If another instance owns the segment already, attach() will succeed.
+    if memory.attach():
         return False, None
-    memory.create(1)
+    # Try to create the shared memory segment and check for success.
+    if not memory.create(1):
+        # Could not create segment (race/permissions) — conservatively refuse to start.
+        return False, None
     return True, memory
 
 
